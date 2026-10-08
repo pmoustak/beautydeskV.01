@@ -15,7 +15,7 @@ Hidden launcher panels for the Windows desktop. Push the mouse against a screen 
 - **Remove an item:** hover it and click the small ✕.
 - **Rows:** the **+** button adds a row (a new column on side panels). Each row has its own title and **pin**; pinned rows stay visible when the panel closes.
 - **Panels:** Settings → **Add panel**. Pin a row, then drag the panel by its move button (four arrows) to any edge of any screen; it slides in from the nearest edge. A panel already on that edge moves clockwise to the next free edge.
-- **Settings** (gear button or tray): transparency, colour, background image (more rows reveal more of it), panels, rows, start with Windows. Changes apply live and save on their own.
+- **Settings** (gear button or tray): transparency, colour, a background image for all panels or a different one per panel (more rows reveal more of it), panels, rows, start with Windows. Changes apply live and save on their own.
 
 Settings are stored in `%APPDATA%\beautydesk\config.json` (tray → **Edit config file…**). Each item can also take `"action"` (`open`, `vscode`, `explorer`, `terminal`), `"args"`, `"icon"` and `"color"`; the file's header explains them.
 

@@ -67,6 +67,7 @@ public sealed class PanelConfig
 {
     public string Monitor { get; set; } = "";    // screen device name; "" = main screen
     public string Edge { get; set; } = "top";    // top, right, bottom, left
+    public string Image { get; set; } = "";      // this panel's background picture; "" = the main one
     public List<Row> Rows { get; set; } = new();
 }
 
@@ -89,8 +90,9 @@ public sealed class Config
     const string Header = """
         // beautydesk settings. The gear button on a panel edits most of this; the rest can be edited here.
         //
-        // panels: each panel sits on one "edge" (top, right, bottom, left) of a "monitor" ("" = main screen)
-        //         and has its own "rows". Each row has a "title", "pinned" (true keeps it on screen) and "projects".
+        // panels: each panel sits on one "edge" (top, right, bottom, left) of a "monitor" ("" = main screen),
+        //         can have its own background "image" ("" = the main one) and has its own "rows".
+        //         Each row has a "title", "pinned" (true keeps it on screen) and "projects".
         // Each project:
         //   "name"   : label under the icon
         //   "path"   : folder, file, .exe, .bat, .ps1, .lnk or URL (%USERPROFILE% and other variables work)
@@ -101,7 +103,7 @@ public sealed class Config
         //              people, school, calendar, puzzle, palette, bug, shield, robot, chat, flask, layers,
         //              translate, monitor, phone, key, apps), 1-2 letters, or a .png/.ico file path
         //   "color"  : optional accent, e.g. "#6EA8FE"
-        // opacity: 0.1 to 1. color: panel colour. image: optional background picture.
+        // opacity: 0.1 to 1. color: panel colour. image: optional background picture for every panel.
         """;
 
     static readonly JsonSerializerOptions ReadOptions = new()
@@ -146,7 +148,8 @@ public sealed class Config
         foreach (var p in c.Panels)
         {
             p.Monitor ??= "";
-            p.Edge = Monitors.Edges.Contains(p.Edge?.ToLowerInvariant()) ? p.Edge.ToLowerInvariant() : "top";
+            p.Image ??= "";
+            p.Edge =Monitors.Edges.Contains(p.Edge?.ToLowerInvariant()) ? p.Edge.ToLowerInvariant() : "top";
             p.Rows ??= new();
             if (p.Rows.Count == 0) p.Rows.Add(new Row { Title = "Projects" });
             foreach (var r in p.Rows)
@@ -173,6 +176,7 @@ public sealed class Config
             sb.AppendLine("    {");
             sb.AppendLine($"      \"monitor\": {Str(panel.Monitor)},");
             sb.AppendLine($"      \"edge\": {Str(panel.Edge)},");
+            sb.AppendLine($"      \"image\": {Str(panel.Image)},");
             sb.AppendLine("      \"rows\": [");
             for (int r = 0; r < panel.Rows.Count; r++)
             {
@@ -979,7 +983,7 @@ sealed class PanelWindow : Window
         cfg = c;
         double opacity = Math.Clamp(c.Opacity, 0.1, 1);
         bool hasImage = false;
-        string path = Launcher.Expand(c.Image);
+        string path = Launcher.Expand(string.IsNullOrWhiteSpace(Pc.Image) ? c.Image : Pc.Image); // this panel's picture, else the main one
         if (path.Length > 0 && File.Exists(path))
         {
             try
@@ -1614,6 +1618,7 @@ sealed class SettingsWindow : Window
     readonly WrapPanel swatches = new() { VerticalAlignment = VerticalAlignment.Center };
     readonly TextBox hex = new() { Width = 110, VerticalAlignment = VerticalAlignment.Center };
     readonly TextBlock imageName = new() { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(12, 0, 0, 0), Opacity = 0.7, TextTrimming = TextTrimming.CharacterEllipsis };
+    readonly TextBlock panelImageName = new() { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(12, 0, 0, 0), Opacity = 0.7, TextTrimming = TextTrimming.CharacterEllipsis };
 
     static readonly string[] Colours = { "#16181E", "#0A0B0E", "#1B2333", "#231C33", "#0F2A27", "#2B1F1A", "#2A2D35", "#EEF0F4" };
 
@@ -1667,7 +1672,7 @@ sealed class SettingsWindow : Window
         colourRow.Children.Add(swatches);
         root.Children.Add(colourRow);
 
-        root.Children.Add(Caption("Background image"));
+        root.Children.Add(Caption("Background image (all panels)"));
         var choose = new Button { Content = "Choose image…" };
         choose.Click += (_, _) =>
         {
@@ -1692,6 +1697,24 @@ sealed class SettingsWindow : Window
         var addPanel = new Button { Content = "Add panel", HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 4, 0, 0) };
         addPanel.Click += (_, _) => Select(host.AddPanel());
         root.Children.Add(addPanel);
+
+        root.Children.Add(Caption("Image for the selected panel"));
+        var choosePanelImage = new Button { Content = "Choose image…" };
+        choosePanelImage.Click += (_, _) =>
+        {
+            var dialog = new OpenFileDialog { Title = "Image for this panel", Filter = "Images|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.webp;*.tif;*.tiff" };
+            if (dialog.ShowDialog(this) != true) return;
+            Selected.Image = dialog.FileName;
+            UpdateImageName();
+            host.AppearanceChanged();
+        };
+        var useMain = new Button { Content = "Use the main image", Margin = new Thickness(8, 0, 0, 0) };
+        useMain.Click += (_, _) => { Selected.Image = ""; UpdateImageName(); host.AppearanceChanged(); };
+        var panelImageRow = new StackPanel { Orientation = Orientation.Horizontal };
+        panelImageRow.Children.Add(choosePanelImage);
+        panelImageRow.Children.Add(useMain);
+        panelImageRow.Children.Add(panelImageName);
+        root.Children.Add(panelImageRow);
 
         root.Children.Add(Heading("Rows"));
         root.Children.Add(rowsCaption);
@@ -1730,6 +1753,7 @@ sealed class SettingsWindow : Window
     public void RefreshPanels()
     {
         if (!cfg.Panels.Contains(Selected)) Selected = cfg.Panels[0];
+        UpdateImageName();
         panelsList.Children.Clear();
         foreach (var pc in cfg.Panels)
         {
@@ -1807,7 +1831,11 @@ sealed class SettingsWindow : Window
         }
     }
 
-    void UpdateImageName() => imageName.Text = string.IsNullOrEmpty(cfg.Image) ? "None" : Path.GetFileName(cfg.Image);
+    void UpdateImageName()
+    {
+        imageName.Text = string.IsNullOrEmpty(cfg.Image) ? "None" : Path.GetFileName(cfg.Image);
+        if (Selected != null) panelImageName.Text = string.IsNullOrEmpty(Selected.Image) ? "Main image" : Path.GetFileName(Selected.Image);
+    }
 
     static TextBlock Heading(string text, bool first = false) => new()
     {
