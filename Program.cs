@@ -795,39 +795,14 @@ sealed class Host
         if (panels.Count > 0) Open(panels[0], manual: true);
     }
 
+    /// <summary>The blue pixel lightning bolt (beautydesk.ico, also the exe's icon) at tray size.</summary>
     static Drawing.Icon AppIcon()
     {
-        var bmp = new Drawing.Bitmap(32, 32);
-        using (var g = Drawing.Graphics.FromImage(bmp))
-        {
-            g.SmoothingMode = Drawing.Drawing2D.SmoothingMode.AntiAlias;
-            using var shape = Rounded(new Drawing.RectangleF(1, 1, 30, 30), 8);
-            using var bg = new Drawing.SolidBrush(Drawing.Color.FromArgb(22, 24, 30));
-            using var edge = new Drawing.Pen(Drawing.Color.FromArgb(70, 76, 90), 1);
-            g.FillPath(bg, shape);
-            g.DrawPath(edge, shape);
-            using var bar = Rounded(new Drawing.RectangleF(7, 7, 18, 5), 2.5f);
-            using var accent = new Drawing.SolidBrush(Drawing.Color.FromArgb(110, 168, 254));
-            g.FillPath(accent, bar);
-            using var dot = new Drawing.SolidBrush(Drawing.Color.FromArgb(205, 210, 220));
-            g.FillEllipse(dot, 7, 18, 5, 5);
-            g.FillEllipse(dot, 13.5f, 18, 5, 5);
-            g.FillEllipse(dot, 20, 18, 5, 5);
-        }
-        return Drawing.Icon.FromHandle(bmp.GetHicon());
+        using var stream = AppIconStream();
+        return new Drawing.Icon(stream, Forms.SystemInformation.SmallIconSize);
     }
 
-    static Drawing.Drawing2D.GraphicsPath Rounded(Drawing.RectangleF r, float radius)
-    {
-        var p = new Drawing.Drawing2D.GraphicsPath();
-        float d = radius * 2;
-        p.AddArc(r.X, r.Y, d, d, 180, 90);
-        p.AddArc(r.Right - d, r.Y, d, d, 270, 90);
-        p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90);
-        p.AddArc(r.X, r.Bottom - d, d, d, 90, 90);
-        p.CloseFigure();
-        return p;
-    }
+    public static Stream AppIconStream() => typeof(Host).Assembly.GetManifestResourceStream("beautydesk.ico");
 }
 
 // ---------- a panel ----------
@@ -1631,6 +1606,7 @@ sealed class SettingsWindow : Window
         Selected = selected;
         ThemeMode = ThemeMode.Dark;
         Title = "beautydesk settings";
+        using (var icon = Host.AppIconStream()) Icon = BitmapFrame.Create(icon, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
         Width = 540;
         Height = 720;
         MinWidth = 460;

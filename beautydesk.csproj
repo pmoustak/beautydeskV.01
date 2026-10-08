@@ -11,6 +11,11 @@
     <AssemblyName>beautydesk</AssemblyName>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>true</SelfContained>
+    <ApplicationIcon>beautydesk.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="beautydesk.ico" LogicalName="beautydesk.ico" />
+  </ItemGroup>
 
 </Project>
