@@ -12,6 +12,13 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>true</SelfContained>
     <ApplicationIcon>beautydesk.ico</ApplicationIcon>
+    <Product>beautydesk</Product>
+    <Version>0.1.0</Version>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <Authors>Periklis Moustaka</Authors>
+    <Company>Periklis Moustaka</Company>
+    <Copyright>© 2026 Periklis Moustaka</Copyright>
+    <Description>Hidden launcher panels for the Windows desktop</Description>
   </PropertyGroup>
 
   <ItemGroup>

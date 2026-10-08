@@ -1712,6 +1712,7 @@ sealed class SettingsWindow : Window
             startup.IsChecked = Startup.IsOn;
         };
         root.Children.Add(startup);
+        root.Children.Add(new TextBlock { Text = "beautydesk 0.1 · by Periklis Moustaka", FontSize = 12, Opacity = 0.5, Margin = new Thickness(0, 28, 0, 0) });
 
         Content = new ScrollViewer { Content = root, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
         RefreshPanels();

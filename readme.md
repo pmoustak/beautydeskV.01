@@ -1,5 +1,7 @@
 # beautydesk
 
+By Periklis Moustaka. Version 0.1.
+
 Hidden launcher panels for the Windows desktop. Push the mouse against a screen edge and a panel slides out with your apps, folders and projects. Move away and it slides back. Pinned rows stay on screen.
 
 ## Install
